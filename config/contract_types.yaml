@@ -1,0 +1,377 @@
+contract_types:
+  export_sheet_strip:
+    name: "板带材出口合同"
+    group: "出口销售"
+    code_prefix: "BX(CK)"
+    source_template: "1板带材出口合同.doc"
+    sample_files:
+      - "BX(CK)26-011南铝板带出口合同.docx"
+    title: "SALES CONTRACT（销售合同）"
+    parties:
+      buyer_label: "The Buyer（买方）"
+      seller_label: "The Seller（卖方）"
+      seller_default: "FUJIAN NANPING ALUMINIUM SHEET & STRIP CO., LTD. 福建省南铝板带加工有限公司"
+    required_fields:
+      - contract_no
+      - sign_date
+      - buyer_name
+      - buyer_address
+      - product_name
+      - delivery_time
+      - payment_terms
+    product_columns:
+      - item_no
+      - product_name
+      - specification
+      - alloy_state
+      - quantity
+      - unit_price
+      - po_no
+      - remark
+    clauses:
+      - heading: "Commodity, Quantity, Price and Shipment Date 商品、数量、价格和船期"
+        body: "产品明细、数量、价格及船期以双方确认的订单和本合同明细表为准。允许卖方在装货时数量出现溢装或短装，最终金额按照本合同单价和实际供货量结算。"
+      - heading: "Special Term 专门条款"
+        body: "产品要求按双方签订的技术协议执行；未约定事项按适用的国际或国家标准执行。"
+      - heading: "Mill/Origin 生产厂"
+        body: "生产厂为福建省南铝板带加工有限公司。"
+      - heading: "Delivery 交货"
+        body: "装运港、目的港、交货期及运输要求以双方确认内容为准。"
+      - heading: "Payment 付款"
+        body: "买方应严格按照本合同约定的卖方银行信息付款；因未按约定账户付款产生的后果由买方承担。"
+      - heading: "Dispute Resolution 争议解决"
+        body: "双方发生争议应友好协商解决；协商不成的，按合同约定管辖机构处理。"
+
+  sheet_strip_retail:
+    name: "铝板(带)零售合同"
+    group: "板带材销售"
+    code_prefix: "BX(LS)"
+    source_template: "2铝板(带)零售合同.doc"
+    sample_files:
+      - "带材零售合同  BX（LS）26-040【浙江银环】.docx"
+    title: "铝板（带）产品销售合同"
+    parties:
+      buyer_label: "需方"
+      seller_label: "供方"
+      seller_default: "福建省南铝板带加工有限公司"
+    required_fields:
+      - contract_no
+      - buyer_name
+      - sign_place
+      - product_name
+      - delivery_place
+      - payment_terms
+    product_columns:
+      - product_name
+      - alloy_state
+      - specification
+      - weight
+      - aluminum_price
+      - processing_fee
+      - unit_price
+      - amount
+      - remark
+    clauses:
+      - heading: "适用范围"
+        body: "本合同适用于需方向供方订购铝板带材所涉及的商务和技术内容。"
+      - heading: "产品规格及价格"
+        body: "最终货款金额按各品种实际供货数量净重乘以单价结算。单价可采用铝锭价加加工费形式确定，具体以双方确认的产品明细为准。"
+      - heading: "技术标准"
+        body: "产品按相应国家标准及双方确认的技术协议执行，供方提供产品合格证或质量证明文件。"
+      - heading: "包装要求"
+        body: "产品采用国内标准或双方约定包装，包装费用按合同约定承担，包装物不回收。"
+      - heading: "运输方式及费用"
+        body: "供方按合同约定方式运输至需方指定地点。需方变更收货地址应及时书面通知供方或签订补充协议。"
+      - heading: "付款方式"
+        body: "货款支付方式、账期、定金及银行承兑汇票要求以本合同填写内容为准。"
+      - heading: "违约责任"
+        body: "任一方违反合同约定，应承担相应违约责任；逾期付款、逾期提货、逾期交货等按合同约定处理。"
+      - heading: "质量异议"
+        body: "需方发现产品外观或内在质量问题，应在约定期限内书面提出异议，供方应及时核实并处理。"
+      - heading: "争议解决"
+        body: "双方发生争议应友好协商解决；协商不成的，向约定法院提起诉讼。"
+
+  sheet_strip_single:
+    name: "铝板(带)单个销售合同"
+    group: "板带材销售"
+    code_prefix: "BX(BD)"
+    source_template: "2铝板(带)零售合同.doc"
+    sample_files:
+      - "带材单个合同  BX（BD）26-076【武汉富航】.doc"
+    title: "铝板（带）产品销售协议"
+    parties:
+      buyer_label: "需方"
+      seller_label: "供方"
+      seller_default: "福建省南铝板带加工有限公司"
+    required_fields:
+      - contract_no
+      - buyer_name
+      - product_name
+      - delivery_place
+      - payment_terms
+    product_columns:
+      - product_name
+      - alloy_state
+      - specification
+      - weight
+      - processing_fee
+      - unit_price
+      - amount
+      - remark
+    clauses:
+      - heading: "适用范围"
+        body: "本协议适用于需方向供方订购铝板带材所涉及的商务和技术内容。"
+      - heading: "产品规格及价格"
+        body: "最终货款金额按实际供货数量净重与单价结算，产品规格、合金状态、加工费及备注以明细表为准。"
+      - heading: "技术标准"
+        body: "产品按国家标准及双方确认标准执行，供方提供正式增值税发票和质量证明材料。"
+      - heading: "运输与交货"
+        body: "供方汽车运输至需方指定地点，需方负责卸货并承担卸货相关费用，具体交货期以双方确认订单为准。"
+      - heading: "付款与对账"
+        body: "付款期限、承兑比例、对账方式以双方确认条款为准。"
+      - heading: "违约责任"
+        body: "供需双方逾期付款、逾期交货、逾期提货或其他违约行为，按照合同约定承担违约责任。"
+      - heading: "通知和送达"
+        body: "双方以合同所载地址、电话、邮箱或微信号作为通知和送达方式；变更信息应书面通知相对方。"
+
+  sheet_strip_annual:
+    name: "南铝板(带)销售年度协议"
+    group: "年度协议"
+    code_prefix: "BX(BD)"
+    source_template: "5南铝板(带)销售年度协议（板带材年协议）.doc"
+    sample_files:
+      - "带材年协议  BX（BD）26-020【广州星亚】.doc"
+    title: "铝板（带）产品销售年度协议"
+    parties:
+      buyer_label: "需方"
+      seller_label: "供方"
+      seller_default: "福建省南铝板带加工有限公司"
+    required_fields:
+      - contract_no
+      - buyer_name
+      - annual_quantity
+      - payment_terms
+      - delivery_place
+    product_columns:
+      - product_name
+      - width_range
+      - thickness_range
+      - alloy_state
+      - processing_fee
+      - remark
+    clauses:
+      - heading: "适用范围"
+        body: "本年度协议适用于需方向供方订购铝板带材及相关客户介绍业务所涉及的商务和技术内容。"
+      - heading: "产品规格及价格"
+        body: "产品单价采用铝锭价加加工费等双方约定方式确定，含税单价不因国家增值税率调整而当然调整。"
+      - heading: "年提货量约定"
+        body: "需方在合同年度内应完成双方约定的有效提货量，并合理均衡各月提货量。"
+      - heading: "订单与交付"
+        body: "需方按约定方式下达订单，订单经供方确认后生效；单一品种规格起订量及数量偏差按合同约定执行。"
+      - heading: "付款约定"
+        body: "年度内货款结算方式、信用额度、承兑比例和年末清账要求按双方确认内容执行。"
+      - heading: "违约责任"
+        body: "逾期付款、逾期提货、不提货或其他违约行为，守约方有权按协议约定主张违约责任。"
+
+  roller_coating_annual:
+    name: "铝板(辊涂)销售年度协议"
+    group: "辊涂销售"
+    code_prefix: "BX(GT)"
+    source_template: "3铝板(辊涂)销售年度协议.doc"
+    sample_files:
+      - "辊涂年协议2  BX（GT）26-010【芜湖弘度】.docx"
+    title: "铝板（辊涂）产品销售协议"
+    parties:
+      buyer_label: "需方"
+      seller_label: "供方"
+      seller_default: "福建省南铝板带加工有限公司"
+    required_fields:
+      - contract_no
+      - buyer_name
+      - annual_quantity
+      - delivery_place
+      - payment_terms
+    product_columns:
+      - alloy_state
+      - thickness_range
+      - width_range
+      - length_range
+      - processing_fee
+      - unit_price
+      - remark
+    clauses:
+      - heading: "适用范围"
+        body: "本协议适用于需方向供方订购光铝及辊涂铝板所涉及的商务和技术内容。"
+      - heading: "产品规格及价格"
+        body: "产品单价采用铝锭价加加工费形式核算，最终货款金额按实际供货数量与单价结算。"
+      - heading: "订单确认和交货约定"
+        body: "需方以邮件、传真、微信等方式下单，订单经供方确认后生效；供方根据实际情况回复交货计划。"
+      - heading: "年提货量约定"
+        body: "需方在合同年度内有效提货量不得低于双方约定数量，并应合理均衡下单提货。"
+      - heading: "技术及验收标准"
+        body: "产品按国家标准及彩色涂层板带材标准执行；特殊涂层或平直度要求另行签订专项技术协议。"
+      - heading: "运输方式及费用"
+        body: "供方运输至需方指定地点，变更收货地址或特殊运输安排按双方确认内容处理。"
+      - heading: "付款和违约"
+        body: "付款周期、信用额度、承兑要求、逾期责任和仓储费用等按本协议约定执行。"
+
+  roller_coating_regional:
+    name: "辊涂区域销售年度协议"
+    group: "辊涂销售"
+    code_prefix: "BX(GT)"
+    source_template: "4铝板(辊涂)销售年度协议（辊涂区域销售年协议）.doc"
+    sample_files:
+      - "辊涂年协议1  BX（GT）26-008【三明鑫永明】.doc"
+    title: "购销协议"
+    parties:
+      buyer_label: "需方"
+      seller_label: "供方"
+      seller_default: "福建省南铝板带加工有限公司"
+    required_fields:
+      - contract_no
+      - buyer_name
+      - sales_region
+      - annual_quantity
+      - payment_terms
+    product_columns:
+      - alloy_state
+      - thickness_range
+      - width_range
+      - color
+      - processing_fee
+      - remark
+    clauses:
+      - heading: "经营方式"
+        body: "供方授权需方在约定区域经销供方彩涂铝卷产品，需方独立经营、自负盈亏。"
+      - heading: "销售区域"
+        body: "需方在约定区域内享有经销权，未经供方许可不得跨区域销售。"
+      - heading: "销售量"
+        body: "需方全年采购量不低于双方约定数量，否则供方有权按协议约定调整或取消经销资格。"
+      - heading: "销售价格"
+        body: "供方销售给需方的彩涂铝卷按照铝锭价加加工费方式定价，具体加工费以明细表为准。"
+      - heading: "订货与交付"
+        body: "需方以传真、微信、QQ或邮件形式下达订单，供方确认后生产交付。"
+      - heading: "特约经销运营"
+        body: "双方应共同维护区域市场，配合开展产品、定价、渠道、售后和品牌维护工作。"
+
+  roller_coating_retail:
+    name: "铝板(辊涂)零售合同"
+    group: "辊涂销售"
+    code_prefix: "BX(GT)"
+    source_template: "6铝板(辊涂)零售合同.doc"
+    sample_files: []
+    title: "铝板（辊涂）销售合同"
+    parties:
+      buyer_label: "需方"
+      seller_label: "供方"
+      seller_default: "福建省南铝板带加工有限公司"
+    required_fields:
+      - contract_no
+      - buyer_name
+      - product_name
+      - delivery_place
+      - payment_terms
+    product_columns:
+      - product_name
+      - alloy_state
+      - specification
+      - front_coating
+      - back_coating
+      - quantity
+      - weight
+      - unit_price
+      - amount
+      - remark
+    clauses:
+      - heading: "产品品种、合金、规格、数量、加工费"
+        body: "产品品种、合金状态、规格、涂层、数量、重量、单价和金额以双方确认的明细表为准。"
+      - heading: "交货地点、运输方式及费用负担"
+        body: "供方汽车运输至需方指定地点，需方负责卸货并承担相关费用。"
+      - heading: "包装要求及费用"
+        body: "产品采用简易卧式包装或双方约定包装，包装费用由约定方承担，包装物不回收。"
+      - heading: "质量异议"
+        body: "需方应在约定期限内提出质量异议，供方收到书面异议后及时答复或派员处理。"
+      - heading: "结算方式及期限"
+        body: "货款结算方式、付款期限、定金及承兑要求以双方确认内容为准。"
+      - heading: "违约责任"
+        body: "需方逾期付款、逾期提货或其他违约行为，供方可按合同约定主张违约责任。"
+
+  aluminum_panel_single:
+    name: "铝单板定作合同"
+    group: "铝单板"
+    code_prefix: "BX(DB)"
+    source_template: ""
+    sample_files:
+      - "铝单板单个合同  BX（DB）26-002【泰山石化总部基地工程--福建省兴盛建设工程有限公司】.docx"
+    title: "铝单板定作合同"
+    parties:
+      buyer_label: "甲方"
+      seller_label: "乙方"
+      seller_default: "福建省南铝板带加工有限公司"
+    required_fields:
+      - contract_no
+      - buyer_name
+      - project_name
+      - product_name
+      - delivery_place
+      - payment_terms
+    product_columns:
+      - product_name
+      - coating
+      - panel_type
+      - quantity
+      - unit_price
+      - amount
+      - remark
+    clauses:
+      - heading: "购货内容"
+        body: "甲方向乙方订购铝单板或相关产品，具体品名、涂层、板型、数量、单价和金额以产品明细表及双方确认订单为准。"
+      - heading: "定作产品质量验收约定"
+        body: "乙方根据双方确认图纸、资料和技术要求进行加工，产品质量按国家标准及合同约定执行。"
+      - heading: "交（提）货地点及办法"
+        body: "乙方按合同约定送货至甲方指定地点，随货提供检测报告、合格证及甲方要求资料。"
+      - heading: "供货数量及时间"
+        body: "乙方收到甲方确认订单、图纸、定金并确认颜色后，按约定周期组织生产和分批交货。"
+      - heading: "包装标准"
+        body: "铝单板装饰表面贴保护膜并采用适当包装，确保运输途中表面不受损。"
+      - heading: "结算方式及期限"
+        body: "货款通过电汇、银行承兑等方式支付，定金、账期、承兑比例和贴息按双方确认内容执行。"
+      - heading: "质保与违约"
+        body: "产品质保、质量维修、更换责任以及逾期付款、逾期交货等违约责任按合同约定执行。"
+
+  aluminum_panel_annual:
+    name: "铝单板年度销售合同"
+    group: "铝单板"
+    code_prefix: "BX(DB)"
+    source_template: ""
+    sample_files:
+      - "铝单板年协议  BX（DB）26-006【南铝工程年度协议】.docx"
+    title: "铝单板年度销售合同"
+    parties:
+      buyer_label: "甲方"
+      seller_label: "乙方"
+      seller_default: "福建省南铝板带加工有限公司"
+    required_fields:
+      - contract_no
+      - buyer_name
+      - annual_quantity
+      - payment_terms
+    product_columns:
+      - product_name
+      - unit_price
+      - remark
+    clauses:
+      - heading: "产品价格"
+        body: "铝单板产品单价、油漆、涂层、加价规则及铝锭价调整机制以年度价格明细和双方确认内容为准。"
+      - heading: "购货内容"
+        body: "购货内容以双方确认的铝单板定作订单为准。"
+      - heading: "质量验收"
+        body: "产品按双方确认图纸、资料和技术标准加工，甲方应按合同约定期限提出数量、外观或色差异议。"
+      - heading: "供货数量及时间"
+        body: "乙方收到甲方确认的工程料单、图纸、订单原件和定金并确认颜色后，按约定周期分批交货。"
+      - heading: "包装标准"
+        body: "铝单板装饰表面贴保护膜、气泡膜包装，每个板块背面正确标明部件编号。"
+      - heading: "结算方式及期限"
+        body: "双方按月对账并按约定期限结清货款，承兑比例、贴息和年末清账要求以合同约定为准。"
+      - heading: "争议解决"
+        body: "合同履行中发生争议，应先协商解决；协商不成按合同约定管辖方式处理。"

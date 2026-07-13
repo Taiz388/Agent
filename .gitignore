@@ -1,0 +1,9 @@
+﻿.env
+__pycache__/
+*.pyc
+uploads/
+outputs/
+data/history.json
+参考资料/
+20260707南铝板带销售合同及模板/
+.streamlit/secrets.toml
