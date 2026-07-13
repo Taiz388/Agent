@@ -376,9 +376,6 @@ def main() -> None:
         unsafe_allow_html=True,
     )
 
-    provider_options = ["siliconflow", "huggingface", "openrouter", "deepseek", "qwen"]
-    env_provider = env_value("LLM_PROVIDER", "siliconflow")
-    default_index = provider_options.index(env_provider) if env_provider in provider_options else 0
     default_models = {
         "siliconflow": "THUDM/GLM-Z1-9B-0414",
         "huggingface": "openai/gpt-oss-120b:fastest",
@@ -386,6 +383,8 @@ def main() -> None:
         "deepseek": "deepseek-v4-flash",
         "qwen": "qwen-plus",
     }
+    provider = env_value("LLM_PROVIDER", "siliconflow")
+    model = env_value("LLM_MODEL", default_models.get(provider, "THUDM/GLM-Z1-9B-0414"))
 
     with st.expander("高级选项（通常不用打开）", expanded=False):
         mode = st.radio(
@@ -398,11 +397,6 @@ def main() -> None:
         labels = {"__auto__": "自动识别"}
         labels.update({key: config["contract_types"][key]["name"] for key in options if key != "__auto__"})
         selected = st.selectbox("合同版本", options, format_func=lambda key: labels[key])
-        with st.expander("智能服务维护", expanded=False):
-            provider = st.selectbox("服务通道", provider_options, index=default_index)
-            model = st.text_input("能力版本", value=env_value("LLM_MODEL", default_models.get(provider, "")) or default_models.get(provider, ""))
-            ok, _ = llm_available(provider, model)
-            st.caption("智能识别已连接" if ok else "智能识别待配置")
 
     mode_for_generation = mode
 
@@ -419,6 +413,7 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
 
 
 
