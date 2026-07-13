@@ -32,8 +32,8 @@ def inject_style() -> None:
     st.markdown(
         """
         <style>
-        .block-container {padding-top: 1.25rem; padding-bottom: 2rem; max-width: 1360px;}
-        [data-testid="stSidebar"] {background: #f5f7fa; border-right: 1px solid #e4e7ec;}
+        .block-container {padding-top: 1.4rem; padding-bottom: 2rem; max-width: 980px;}
+        [data-testid="stSidebar"] {display: none;}
         h1, h2, h3 {letter-spacing: 0;} h1 {font-size: 2rem; margin-bottom: .25rem;} h2, h3 {color: #182230;}
         .metric-strip {
             display:grid; grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -283,14 +283,14 @@ def render_quick_generation(mode: str, selected: str, config: dict[str, Any], pr
         type=[suffix.strip(".") for suffix in SUPPORTED_SUFFIXES],
     )
 
-    with st.expander("基础信息（可选）", expanded=False):
+    with st.expander("高级选项（通常不用填写）", expanded=False):
         manual_contract_no = st.text_input("合同编号", value="")
         manual_buyer = st.text_input("需方/客户名称", value="")
         manual_seller = st.text_input("供方/供应商名称", value="")
 
-    generate = st.button("一键生成合同", type="primary", use_container_width=True)
+    generate = st.button("生成合同", type="primary", use_container_width=True)
     if not generate:
-        st.caption("上传模板、已签样本、招标文件、中标通知书或客户资料后即可生成。")
+        st.caption("上传模板、已签样本、招标文件、中标/中选通知书或客户资料后，点击生成即可下载合同。")
         return
     if not uploaded_files:
         st.warning("请先上传资料。")
@@ -357,7 +357,7 @@ def render_quick_generation(mode: str, selected: str, config: dict[str, Any], pr
         use_container_width=True,
     )
 
-    with st.expander("生成依据与核对", expanded=False):
+    with st.expander("查看识别结果", expanded=False):
         st.write(f"识别合同类型：{contract_type.get('name')}")
         if issues:
             for issue in issues:
@@ -372,103 +372,55 @@ def main() -> None:
 
     st.title("合同智能生成工作台")
     st.markdown(
-        '<div class="workbench-note">面向销售合同场景的资料整理、条款核对与合同文件生成工具。上传资料或直接填写信息，确认后即可生成 Word 合同。</div>',
+        '<div class="workbench-note">上传合同模板、已签样本、招标文件、中标/中选通知书或客户资料，系统会自动识别场景并生成 Word 合同。</div>',
         unsafe_allow_html=True,
     )
 
-    with st.sidebar:
-        st.header("业务导航")
+    provider_options = ["siliconflow", "huggingface", "openrouter", "deepseek", "qwen"]
+    env_provider = env_value("LLM_PROVIDER", "siliconflow")
+    default_index = provider_options.index(env_provider) if env_provider in provider_options else 0
+    default_models = {
+        "siliconflow": "THUDM/GLM-Z1-9B-0414",
+        "huggingface": "openai/gpt-oss-120b:fastest",
+        "openrouter": "openrouter/free",
+        "deepseek": "deepseek-v4-flash",
+        "qwen": "qwen-plus",
+    }
+
+    with st.expander("高级选项（通常不用打开）", expanded=False):
         mode = st.radio(
-            "业务场景",
-            ["套用现有模板", "意向书生成合同", "标书资料生成合同"],
+            "资料类型",
+            ["自动判断", "套用现有模板", "意向书生成合同", "标书资料生成合同"],
             index=0,
+            horizontal=True,
         )
         options = ["__auto__"] + contract_type_options(config)
         labels = {"__auto__": "自动识别"}
         labels.update({key: config["contract_types"][key]["name"] for key in options if key != "__auto__"})
         selected = st.selectbox("合同版本", options, format_func=lambda key: labels[key])
-        st.divider()
-        provider_options = ["siliconflow", "huggingface", "openrouter", "deepseek", "qwen"]
-        env_provider = env_value("LLM_PROVIDER", "siliconflow")
-        default_index = provider_options.index(env_provider) if env_provider in provider_options else 0
-        default_models = {
-            "siliconflow": "THUDM/GLM-Z1-9B-0414",
-            "huggingface": "openai/gpt-oss-120b:fastest",
-            "openrouter": "openrouter/free",
-            "deepseek": "deepseek-v4-flash",
-            "qwen": "qwen-plus",
-        }
-        with st.expander("智能服务", expanded=False):
+        with st.expander("智能服务维护", expanded=False):
             provider = st.selectbox("服务通道", provider_options, index=default_index)
             model = st.text_input("能力版本", value=env_value("LLM_MODEL", default_models.get(provider, "")) or default_models.get(provider, ""))
-            ok, message = llm_available(provider, model)
-            st.markdown(
-                f"<span class='{'status-ok' if ok else 'status-warn'}'>{'已连接' if ok else '待配置'}</span>",
-                unsafe_allow_html=True,
-            )
-        st.divider()
-        if st.button("清空当前字段", use_container_width=True):
-            st.session_state.fields = blank_fields()
-            st.session_state.fields["sign_date"] = date.today().strftime("%Y年%m月%d日")
-            st.session_state.fields["sign_place"] = "南平市延平区"
-            st.session_state.fields["products"] = [{"product_name": "铝板（带）产品", "remark": "请补充产品明细"}]
-            st.session_state.ai_clause = ""
-            st.session_state.generated_path = ""
-            st.rerun()
+            ok, _ = llm_available(provider, model)
+            st.caption("智能识别已连接" if ok else "智能识别待配置")
 
-    contract_type = {"name": "自动识别", "code_prefix": "按资料判断"} if selected == "__auto__" else config["contract_types"][selected]
-    render_header(contract_type, st.session_state.fields, llm_available(provider, model))
+    mode_for_generation = mode
 
-    tab1, tab2, tab3, tab4 = st.tabs(["合同生成", "资料库", "生成记录", "系统状态"])
-    with tab1:
-        render_quick_generation(mode, selected, config, provider, model)
+    render_quick_generation(mode_for_generation, selected, config, provider, model)
 
-    with tab2:
-        render_materials_panel(config)
-
-    with tab3:
-        render_history()
-
-    with tab4:
-        st.subheader("系统状态")
-        settings = get_llm_settings(provider, model)
-        ok, message = llm_available(provider, model)
-        col_a, col_b, col_c = st.columns(3)
-        with col_a:
-            st.metric("合同类型", len(config["contract_types"]))
-        with col_b:
-            st.metric("智能识别", "已连接" if ok else "待配置")
-        with col_c:
-            st.metric("输出格式", "Word")
-
-        if st.button("检测智能服务", use_container_width=True):
-            if not ok:
-                st.warning("智能服务尚未配置完成。")
-            else:
-                with st.spinner("正在检测智能服务..."):
-                    try:
-                        reply = chat_completion(
-                            [
-                                {"role": "system", "content": "你是合同生成系统的连通性测试助手。"},
-                                {"role": "user", "content": "请只回复：LLM配置成功"},
-                            ],
-                            provider=provider,
-                            model=model,
-                            temperature=0,
-                        )
-                        st.success(reply.strip())
-                    except Exception as exc:
-                        st.error(f"智能服务连接失败：{exc}")
-
-        with st.expander("维护信息", expanded=False):
-            st.write("合同类型配置：`config/contract_types.yaml`")
-            st.write(f"服务通道：`{settings.provider}`")
-            st.write(f"能力版本：`{settings.model}`")
-            st.write(f"服务地址：`{settings.base_url}`")
-
+    with st.expander("测试样例说明", expanded=False):
+        st.markdown(
+            """
+- **套用现有模板**：上传 `参考资料/20260707南铝板带销售合同及模板/.../已签合同` 中的已签合同样本，例如 `带材零售合同` 或 `BX(CK)26-011南铝板带出口合同.docx`。
+- **标书资料生成合同**：上传 `参考资料/交易生成合同` 中某一个案例文件夹内的全部文件，例如招标/谈判文件、中标/中选通知书、最终合同样本。
+- **意向书生成合同**：暂无真实意向书样本，可上传一段包含双方、标的、金额、交货、付款信息的 Word/TXT 业务说明。
+            """
+        )
 
 if __name__ == "__main__":
     main()
+
+
 
 
 
