@@ -1,13 +1,13 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from docx import Document
-from docx.enum.section import WD_SECTION
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.shared import Cm, Pt
+from docx.oxml.ns import qn
+from docx.shared import Cm, Pt, RGBColor
 
 from .utils import OUTPUTS_DIR, safe_filename
 
@@ -19,6 +19,10 @@ SELLER_INFO = {
     "seller_account": "426058390437",
     "seller_tax_no": "913507007821750903",
 }
+
+FONT_NAME = "宋体"
+BLACK = RGBColor(0, 0, 0)
+FALLBACK = "以双方确认资料为准"
 
 
 def generate_contract_docx(
@@ -38,10 +42,12 @@ def generate_contract_docx(
     add_intro(doc, contract_type, fields)
     add_product_table(doc, contract_type, products)
     add_contract_clauses(doc, contract_type, fields)
+    add_standard_legal_safeguards(doc, contract_type)
     if ai_clause.strip():
         add_ai_clause(doc, ai_clause)
     add_contact_and_bank(doc, contract_type, fields)
     add_signature(doc, contract_type, fields)
+    enforce_black_songti(doc)
 
     contract_no = fields.get("contract_no") or datetime.now().strftime("%Y%m%d%H%M")
     buyer = fields.get("buyer_name") or "客户"
@@ -59,17 +65,19 @@ def setup_document(doc: Document) -> None:
     section.right_margin = Cm(2.4)
 
     styles = doc.styles
-    styles["Normal"].font.name = "宋体"
-    styles["Normal"].font.size = Pt(10.5)
-    styles["Heading 1"].font.name = "宋体"
-    styles["Heading 1"].font.size = Pt(12)
-    styles["Heading 1"].font.bold = True
+    for style_name, size, bold in [("Normal", 10.5, False), ("Heading 1", 12, True)]:
+        style = styles[style_name]
+        style.font.name = FONT_NAME
+        style._element.rPr.rFonts.set(qn("w:eastAsia"), FONT_NAME)
+        style.font.size = Pt(size)
+        style.font.bold = bold
+        style.font.color.rgb = BLACK
 
 
 def add_title(doc: Document, title: str) -> None:
     paragraph = doc.add_paragraph()
     paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = paragraph.add_run(title)
+    run = paragraph.add_run(str(title or "合同"))
     run.bold = True
     run.font.size = Pt(18)
 
@@ -78,9 +86,9 @@ def add_header_info(doc: Document, contract_type: dict[str, Any], fields: dict[s
     table = doc.add_table(rows=2, cols=4)
     table.style = "Table Grid"
     values = [
-        ("合同编号", fields.get("contract_no", "")),
-        ("签订日期", fields.get("sign_date", "")),
-        ("签订地点", fields.get("sign_place", "南平市延平区")),
+        ("合同编号", field_value(fields.get("contract_no"))),
+        ("签订日期", field_value(fields.get("sign_date"))),
+        ("签订地点", field_value(fields.get("sign_place"), "南平市延平区")),
         ("合同类型", contract_type.get("name", "")),
     ]
     for idx, (label, value) in enumerate(values):
@@ -99,20 +107,28 @@ def add_parties(doc: Document, contract_type: dict[str, Any], fields: dict[str, 
     table = doc.add_table(rows=2, cols=2)
     table.style = "Table Grid"
     table.cell(0, 0).text = buyer_label
-    table.cell(0, 1).text = fields.get("buyer_name", "")
+    table.cell(0, 1).text = field_value(fields.get("buyer_name"))
     table.cell(1, 0).text = seller_label
-    table.cell(1, 1).text = seller
+    table.cell(1, 1).text = field_value(seller)
 
 
 def add_intro(doc: Document, contract_type: dict[str, Any], fields: dict[str, Any]) -> None:
-    buyer = fields.get("buyer_name") or "需方"
-    seller = fields.get("seller_name") or SELLER_INFO["seller_name"]
-    product = fields.get("product_name") or "相关产品"
+    buyer = field_value(fields.get("buyer_name"), "需方")
+    seller = field_value(fields.get("seller_name") or contract_type.get("parties", {}).get("seller_default") or SELLER_INFO["seller_name"])
+    product = field_value(fields.get("product_name"), "合同标的物")
     project = fields.get("project_name")
-    if project:
-        text = f"经双方友好协商，{buyer}因{project}需要，向{seller}采购{product}，双方依据相关法律法规订立本合同，共同遵守。"
+    name = contract_type.get("name", "")
+    group = contract_type.get("group", "")
+    legal_basis = "依据《中华人民共和国民法典》《中华人民共和国产品质量法》及相关法律法规"
+    if "出口" in name or "出口" in group:
+        text = f"买卖双方经友好协商，就{buyer}向{seller}购买{product}事宜达成本合同；双方同意按本合同及双方确认文件履行。"
+    elif contract_type.get("name") == "采购买卖合同":
+        if project:
+            text = f"经双方友好协商，{buyer}因{project}需要，向{seller}采购{product}，双方{legal_basis}订立本合同，共同遵守。"
+        else:
+            text = f"经双方友好协商，{buyer}向{seller}采购{product}，双方{legal_basis}订立本合同，共同遵守。"
     else:
-        text = f"供需双方本着互惠互利、诚实守信、真诚合作的原则，就{buyer}向{seller}采购{product}事宜达成本合同。"
+        text = f"供需双方本着平等自愿、诚实信用、互惠互利的原则，就{buyer}向{seller}订购{product}事宜，{legal_basis}订立本合同，共同遵守。"
     doc.add_paragraph(text)
 
 
@@ -124,6 +140,8 @@ def add_product_table(doc: Document, contract_type: dict[str, Any], products: li
         "product_name": "产品",
         "specification": "规格",
         "alloy_state": "合金状态",
+        "brand": "品牌",
+        "unit": "单位",
         "quantity": "数量",
         "weight": "重量",
         "unit_price": "单价",
@@ -148,13 +166,10 @@ def add_product_table(doc: Document, contract_type: dict[str, Any], products: li
     for row_index, product in enumerate(products or [{}], start=1):
         cells = table.add_row().cells
         for idx, col in enumerate(columns):
-            if col == "item_no":
-                value = str(row_index)
-            else:
-                value = str(product.get(col, ""))
+            value = str(row_index) if col == "item_no" else field_value(product.get(col))
             cells[idx].text = value
 
-    doc.add_paragraph("备注：最终货款金额以实际供货数量、双方确认单价及结算规则为准。")
+    doc.add_paragraph("备注：最终货款金额以实际供货数量、双方确认单价及结算规则为准；未列明事项以双方书面确认的订单、技术协议或补充协议为准。")
 
 
 def add_contract_clauses(doc: Document, contract_type: dict[str, Any], fields: dict[str, Any]) -> None:
@@ -172,11 +187,24 @@ def add_contract_clauses(doc: Document, contract_type: dict[str, Any], fields: d
         ("销售区域", fields.get("sales_region")),
         ("合同金额", fields.get("total_amount")),
     ]
-    if any(value for _, value in extra_fields):
-        doc.add_heading("补充商务信息", level=1)
-        for label, value in extra_fields:
-            if value:
-                doc.add_paragraph(f"{label}：{value}")
+    doc.add_heading("补充商务信息", level=1)
+    for label, value in extra_fields:
+        doc.add_paragraph(f"{label}：{field_value(value)}")
+
+
+def add_standard_legal_safeguards(doc: Document, contract_type: dict[str, Any]) -> None:
+    existing = "\n".join(clause.get("heading", "") for clause in contract_type.get("clauses", []))
+    next_index = len(contract_type.get("clauses", [])) + 2
+    standard = []
+    if "不可抗力" not in existing:
+        standard.append(("不可抗力", "不可抗力是指不能预见、不能避免且不能克服的客观情况。受不可抗力影响的一方应及时通知相对方，并在合理期限内提供证明，双方应采取必要措施减少损失；不可抗力影响消除后，应继续履行可履行部分。"))
+    if "变更" not in existing and "补充" not in existing:
+        standard.append(("合同变更与补充", "本合同未尽事宜，由双方另行协商并签署书面补充协议。补充协议、订单、技术协议、对账单等经双方确认的文件，与本合同具有同等效力。"))
+    if "适用法律" not in existing and "争议" not in existing:
+        standard.append(("适用法律与争议解决", "本合同订立、履行、解释及争议解决适用中华人民共和国法律。发生争议时，双方应先友好协商；协商不成的，按合同约定的管辖法院或争议解决方式处理。"))
+    for offset, (heading, body) in enumerate(standard):
+        doc.add_heading(f"{to_chinese_index(next_index + offset)}、{heading}", level=1)
+        doc.add_paragraph(body)
 
 
 def fill_clause_body(body: str, fields: dict[str, Any]) -> str:
@@ -199,11 +227,11 @@ def add_contact_and_bank(doc: Document, contract_type: dict[str, Any], fields: d
     table.style = "Table Grid"
     rows = [
         ("项目", "需方/甲方", "供方/乙方"),
-        ("单位名称", fields.get("buyer_name", ""), fields.get("seller_name") or SELLER_INFO["seller_name"]),
-        ("单位地址", fields.get("buyer_address", ""), SELLER_INFO["seller_address"]),
-        ("联系人", fields.get("contact_person", ""), fields.get("seller_contact", "")),
-        ("联系电话", fields.get("contact_phone", ""), fields.get("seller_phone", "")),
-        ("开户行/账号/税号", fields.get("buyer_bank_info", ""), f"{SELLER_INFO['seller_bank']} / {SELLER_INFO['seller_account']} / {SELLER_INFO['seller_tax_no']}"),
+        ("单位名称", field_value(fields.get("buyer_name")), field_value(fields.get("seller_name") or SELLER_INFO["seller_name"])),
+        ("单位地址", field_value(fields.get("buyer_address")), SELLER_INFO["seller_address"]),
+        ("联系人", field_value(fields.get("contact_person")), field_value(fields.get("seller_contact"))),
+        ("联系电话", field_value(fields.get("contact_phone")), field_value(fields.get("seller_phone"))),
+        ("开户行/账号/税号", field_value(fields.get("buyer_bank_info")), f"{SELLER_INFO['seller_bank']} / {SELLER_INFO['seller_account']} / {SELLER_INFO['seller_tax_no']}"),
     ]
     for row_idx, row_values in enumerate(rows):
         for col_idx, value in enumerate(row_values):
@@ -226,6 +254,39 @@ def add_signature(doc: Document, contract_type: dict[str, Any], fields: dict[str
             table.cell(row_idx, col_idx).text = value
 
 
+def field_value(value: Any, fallback: str = FALLBACK) -> str:
+    text = str(value or "").strip()
+    return text if text else fallback
+
+
+def enforce_black_songti(doc: Document) -> None:
+    for paragraph in iter_all_paragraphs(doc):
+        for run in paragraph.runs:
+            run.font.color.rgb = BLACK
+            if not run.font.name:
+                run.font.name = FONT_NAME
+            run._element.rPr.rFonts.set(qn("w:eastAsia"), FONT_NAME)
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                for paragraph in cell.paragraphs:
+                    for run in paragraph.runs:
+                        run.font.color.rgb = BLACK
+                        if not run.font.name:
+                            run.font.name = FONT_NAME
+                        run._element.rPr.rFonts.set(qn("w:eastAsia"), FONT_NAME)
+
+
+def iter_all_paragraphs(doc: Document):
+    for paragraph in doc.paragraphs:
+        yield paragraph
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                for paragraph in cell.paragraphs:
+                    yield paragraph
+
+
 def to_chinese_index(value: int) -> str:
     mapping = {
         1: "一",
@@ -243,5 +304,8 @@ def to_chinese_index(value: int) -> str:
         13: "十三",
         14: "十四",
         15: "十五",
+        16: "十六",
+        17: "十七",
+        18: "十八",
     }
     return mapping.get(value, str(value))

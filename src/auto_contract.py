@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import re
 from typing import Any
@@ -106,22 +106,87 @@ def contract_type_for_key(key: str | None, config: dict[str, Any]) -> dict[str, 
 
 def build_fields_from_text(text: str, contract_type: dict[str, Any], mode: str = "") -> dict[str, Any]:
     fields = rule_extract(text)
-    purchase_fields = extract_purchase_fields(text)
-    fields = merge_extracted(fields, purchase_fields)
-    for key in ["contract_no", "buyer_name", "seller_name", "project_name", "product_name", "total_amount", "delivery_time", "delivery_place", "payment_terms", "products"]:
-        if purchase_fields.get(key):
-            fields[key] = purchase_fields[key]
-    fields.setdefault("sign_place", "南平市延平区")
-    if not fields.get("seller_name") and "采购" in contract_type.get("group", ""):
-        fields["seller_name"] = purchase_fields.get("seller_name", "")
-    if not fields.get("buyer_name") and contract_type.get("name") == "采购买卖合同":
-        fields["buyer_name"] = "福建省南平铝业股份有限公司"
-    if not fields.get("products"):
-        fields["products"] = purchase_fields.get("products") or [{"product_name": fields.get("product_name") or "待补充标的物"}]
+    is_purchase = contract_type.get("name") == "采购买卖合同" or contract_type.get("group") == "交易生成合同"
+
+    if is_purchase:
+        purchase_fields = extract_purchase_fields(text)
+        fields = merge_extracted(fields, purchase_fields)
+        for key in [
+            "contract_no",
+            "buyer_name",
+            "seller_name",
+            "project_name",
+            "product_name",
+            "total_amount",
+            "delivery_time",
+            "delivery_place",
+            "payment_terms",
+            "products",
+        ]:
+            if purchase_fields.get(key):
+                fields[key] = purchase_fields[key]
+        fields.setdefault("sign_place", "南平市延平区")
+        if not fields.get("buyer_name"):
+            fields["buyer_name"] = "福建省南平铝业股份有限公司"
+        if not fields.get("products"):
+            fields["products"] = purchase_fields.get("products") or [{"product_name": fields.get("product_name") or "待补充标的物"}]
+    else:
+        fields.setdefault("sign_place", "南平市延平区")
+        if not fields.get("seller_name"):
+            fields["seller_name"] = contract_type.get("parties", {}).get("seller_default", "")
+        if not fields.get("product_name"):
+            fields["product_name"] = infer_default_product(contract_type)
+        if not fields.get("products"):
+            fields["products"] = [{"product_name": fields.get("product_name") or "产品", "remark": "以双方确认订单为准"}]
+
+    fields = normalize_contract_fields(fields, contract_type)
     fields["generation_mode"] = mode
     return fields
 
 
+def infer_default_product(contract_type: dict[str, Any]) -> str:
+    name = contract_type.get("name", "")
+    if "出口" in name or "板带" in name or "铝板" in name:
+        return "铝板（带）产品"
+    if "辊涂" in name:
+        return "辊涂铝板产品"
+    if "铝单板" in name:
+        return "铝单板产品"
+    return "合同标的物"
+
+
+def normalize_contract_fields(fields: dict[str, Any], contract_type: dict[str, Any]) -> dict[str, Any]:
+    cleaned = dict(fields)
+    fallback = "以双方确认为准"
+    for key in ["contract_no", "buyer_name", "seller_name", "product_name"]:
+        if not str(cleaned.get(key) or "").strip():
+            cleaned[key] = fallback
+    for key in ["sign_place", "delivery_place", "delivery_time", "payment_terms"]:
+        value = str(cleaned.get(key) or "").strip()
+        if value and len(value) > 140:
+            value = value[:140].rstrip("，,；;")
+        cleaned[key] = value
+    products = cleaned.get("products") or []
+    if not isinstance(products, list):
+        products = []
+    cleaned["products"] = normalize_products(products, cleaned.get("product_name", ""))
+    return cleaned
+
+
+def normalize_products(products: list[dict[str, Any]], default_name: str) -> list[dict[str, str]]:
+    normalized: list[dict[str, str]] = []
+    for item in products:
+        if not isinstance(item, dict):
+            continue
+        row = {str(k): str(v).strip() for k, v in item.items() if v not in (None, "")}
+        if not row.get("product_name"):
+            row["product_name"] = default_name or "合同标的物"
+        if not row.get("remark"):
+            row["remark"] = "以双方确认资料为准"
+        normalized.append(row)
+    if not normalized:
+        normalized.append({"product_name": default_name or "合同标的物", "remark": "以双方确认资料为准"})
+    return normalized[:12]
 def extract_purchase_fields(text: str) -> dict[str, Any]:
     compact = re.sub(r"[ \t]+", " ", text)
     fields: dict[str, Any] = {}
@@ -196,6 +261,11 @@ def extract_purchase_fields(text: str) -> dict[str, Any]:
         fields["project_name"] = clean_case if clean_case.endswith("项目") else clean_case + "项目"
     if clean_case and (not fields.get("product_name") or "|" in fields.get("product_name", "") or "型号" in fields.get("product_name", "")):
         fields["product_name"] = clean_case.replace("采购项目", "").replace("采购", "")
+    payment = fields.get("payment_terms", "")
+    if payment and re.search(r"含\s*13\s*$", payment):
+        fields["payment_terms"] = payment.rstrip() + "%的增值税专用发票后，按合同约定期限和方式支付货款"
+    elif payment and "增值税" not in payment and "13" in payment:
+        fields["payment_terms"] = payment.rstrip("，,；;") + "；发票及税率按双方确认资料执行"
     if fields.get("project_name", "").startswith("文件"):
         raw_title = fields["project_name"].replace("文件：", "").replace("文件:", "")
         clean_from_project = clean_case_title(raw_title)

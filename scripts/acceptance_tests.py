@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import sys
 from pathlib import Path
@@ -69,7 +69,7 @@ def run_case(case: dict) -> tuple[bool, str]:
     fields = build_fields_from_text(text, contract_type, case["mode"])
     output_path = generate_contract_docx(contract_type, fields, fields.get("products", []), ai_clause="")
     generated = docx_text(output_path)
-    missing = [item for item in case["contains"] if item not in text and item not in generated]
+    missing = [item for item in case["contains"] if item not in generated]
     if missing:
         return False, f"缺少预期内容：{missing}；输出：{output_path.name}"
     return True, f"通过；输出：{output_path.name}"
