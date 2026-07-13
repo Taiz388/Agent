@@ -402,17 +402,10 @@ def main() -> None:
 
     render_quick_generation(mode_for_generation, selected, config, provider, model)
 
-    with st.expander("测试样例说明", expanded=False):
-        st.markdown(
-            """
-- **套用现有模板**：上传 `参考资料/20260707南铝板带销售合同及模板/.../已签合同` 中的已签合同样本，例如 `带材零售合同` 或 `BX(CK)26-011南铝板带出口合同.docx`。
-- **标书资料生成合同**：上传 `参考资料/交易生成合同` 中某一个案例文件夹内的全部文件，例如招标/谈判文件、中标/中选通知书、最终合同样本。
-- **意向书生成合同**：暂无真实意向书样本，可上传一段包含双方、标的、金额、交货、付款信息的 Word/TXT 业务说明。
-            """
-        )
 
 if __name__ == "__main__":
     main()
+
 
 
 
